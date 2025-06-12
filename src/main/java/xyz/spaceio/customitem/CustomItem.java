@@ -21,7 +21,7 @@ public class CustomItem implements ConfigurationSerializable {
 	private String displayname;
 
 	private boolean hasMeta = false;
-	private boolean hasCustomModelData = false;
+	private Integer customModelData = null; // Changed from boolean to Integer
 
 	private short durability;
 	private List<String> lore;
@@ -36,7 +36,10 @@ public class CustomItem implements ConfigurationSerializable {
 		this.durability = is.getDurability();
 		if (is.hasItemMeta()) {
 			hasMeta = true;
-			this.hasCustomModelData = is.getItemMeta().hasCustomModelData();
+			// Store the actual CustomModelData value instead of just checking if it exists
+			if (is.getItemMeta().hasCustomModelData()) {
+				this.customModelData = is.getItemMeta().getCustomModelData();
+			}
 			if (is.getItemMeta().hasDisplayName()) {
 				this.displayname = is.getItemMeta().getDisplayName();
 			}
@@ -85,8 +88,20 @@ public class CustomItem implements ConfigurationSerializable {
 			return false;
 		}
 
-		if (is.hasItemMeta() && is.getItemMeta().hasCustomModelData() != hasCustomModelData && !hasFlag(Flags.IGNORE_CUSTOM_MODEL_DATA)) {
-			return false;
+		// Compare actual CustomModelData values instead of just checking existence
+		if (!hasFlag(Flags.IGNORE_CUSTOM_MODEL_DATA)) {
+			Integer itemCustomModelData = null;
+			if (is.hasItemMeta() && is.getItemMeta().hasCustomModelData()) {
+				itemCustomModelData = is.getItemMeta().getCustomModelData();
+			}
+			
+			// Check if both are null (no custom model data) or if they have the same value
+			if (customModelData == null && itemCustomModelData != null) {
+				return false;
+			}
+			if (customModelData != null && !customModelData.equals(itemCustomModelData)) {
+				return false;
+			}
 		}
 	
 		if (hasMeta && !hasFlag(Flags.IGNORE_META)) {
@@ -220,5 +235,18 @@ public class CustomItem implements ConfigurationSerializable {
 	
 	public void removeFlag(Flags flag) {
 		flags.remove(flag);
+	}
+	
+	// Getter and setter for the new customModelData field
+	public Integer getCustomModelData() {
+		return customModelData;
+	}
+	
+	public void setCustomModelData(Integer customModelData) {
+		this.customModelData = customModelData;
+	}
+	
+	public boolean hasCustomModelData() {
+		return customModelData != null;
 	}
 }
